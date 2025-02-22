@@ -6,7 +6,7 @@ if (!MONGODB_URI) {
   throw new Error("MONGODB_URI is not defined in environment variables");
 }
 
-const dbConnect = async () => {
+const dbconnect = async () => {
   if (mongoose.connection.readyState >= 1) return;
 
   try {
@@ -21,4 +21,4 @@ const dbConnect = async () => {
   }
 };
 
-export default dbConnect;
+export default dbconnect;

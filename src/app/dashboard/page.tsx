@@ -32,7 +32,7 @@ export default function Dashboard() {
 
   // Share on WhatsApp
   const shareOnWhatsApp = () => {
-    const message = `Hi, I am raising funds for an NGO. Support me by donating through this link: ${window.location.origin.replace('http://', 'https://')}/donate?ref=${user.referralCode}`;
+    const message = `Hi, I am raising funds for an NGO. Support me by donating through this link: ${window.location.origin}/donate?ref=${user.referralCode}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };

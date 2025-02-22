@@ -14,7 +14,10 @@ const DonationPage = () => {
       ) : (
         <p className="text-red-500 mb-4">No referral code provided</p>
       )}
-      <DonationForm referralCode={referralCode} />
+      {/* Donation Form Component */}
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+        <DonationForm referralCode={referralCode} />
+      </div>
     </div>
   );
 };
