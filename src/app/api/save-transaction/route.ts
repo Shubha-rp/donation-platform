@@ -31,6 +31,18 @@ export async function POST(req: Request) {
 
     await transaction.save();
     console.log("✅ Transaction saved successfully:", transaction);
+//user
+if (referralCode) {
+  console.log("🔍 Referral code received:", referralCode);
+  const referredTransactions = await Transaction.find({ referralCode }).exec();
+  
+  // Log all transactions with this referral code for debugging
+  console.log("🔍 Found referred transactions:", referredTransactions);
+
+  // Optionally, you can track total earnings for each referral code:
+  const totalEarningsFromReferral = referredTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  console.log(`Total earnings from referral code ${referralCode}: ${totalEarningsFromReferral}`);
+}
 
     return NextResponse.json({ success: true, message: "Transaction saved", transaction }, { status: 201 });
 

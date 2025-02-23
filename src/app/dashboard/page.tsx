@@ -3,15 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import useSWR from "swr";
+import useSWR ,{mutate} from "swr";
 import { Loader2 } from "lucide-react";
-
+import { useState ,useEffect} from "react";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function Dashboard() {
   const user = {
     name: "Prashant Shukla",
-    goalAchieved: 10,
     totalGoal: 30000,
     referralCode: "pra7432",
     level: "Star",
@@ -21,7 +20,17 @@ export default function Dashboard() {
 
   const { data, error, isLoading } = useSWR(`/api/transactions?ref=${user.referralCode}`, fetcher);
   
-  const totalEarnings = data?.totalEarnings || 0;
+  
+  const [totalEarnings, setTotalEarnings] = useState<number>(data?.totalEarnings || 0);
+  const [goalAchieved, setGoalAchieved] = useState<number>(0);
+
+  useEffect(() => {
+    if (data) {
+      setTotalEarnings(data.totalEarnings || 0); // Assuming `data.totalEarnings` is the total earnings field
+      setGoalAchieved(data.totalEarnings || 0);
+    }
+  }, [data]);
+
 
   // Copy Referral Link
   const copyReferralLink = () => {
@@ -36,6 +45,27 @@ export default function Dashboard() {
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
+  
+   // Handle successful transaction
+   const handleTransaction = async () => {
+    // Call your backend API to process the donation
+    const response = await fetch(`/api/donate?ref=${user.referralCode}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: 100 }), // Amount can vary based on transaction
+    });
+
+    if (response.ok) {
+      // After successful transaction, trigger a re-fetch
+      const responseData = await response.json();
+      const newTotalEarnings = responseData.totalEarnings;
+      setTotalEarnings(newTotalEarnings);
+      setGoalAchieved(newTotalEarnings); // Update the state with new earnings
+      mutate(`/api/transactions?ref=${user.referralCode}`); // Ensure the transactions are updated
+    } else {
+      alert("Transaction failed. Please try again.");
+    }
+  };
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto">
@@ -45,9 +75,9 @@ export default function Dashboard() {
       <Card className="mt-4 p-4">
         <CardContent>
           <h2 className="text-md md:text-lg font-semibold text-black">
-            Goal Achieved: ₹{user.goalAchieved} / ₹{user.totalGoal}
+            Goal Achieved: ₹{goalAchieved} / ₹{user.totalGoal}
           </h2>
-          <Progress value={(user.goalAchieved / user.totalGoal) * 100} className="mt-2" />
+          <Progress value={(goalAchieved / user.totalGoal) * 100} className="mt-2" />
           <p className="text-xs md:text-sm mt-2 text-black">Level: {user.level} (Next: ₹{user.nextLevel})</p>
           
           {/* Total Referral Earnings */}
@@ -82,6 +112,13 @@ export default function Dashboard() {
         <Button className="w-full md:w-auto" onClick={copyReferralLink}>Copy Donation Link</Button>
         <Button className="w-full md:w-auto bg-green-500" onClick={shareOnWhatsApp}>Share on WhatsApp</Button>
       </div>
+       {/* Trigger Donation Button */}
+       <div className="mt-4">
+        <Button className="w-full md:w-auto bg-blue-500" onClick={handleTransaction}>
+          Donate ₹100
+        </Button>
+      </div>
     </div>
   );
 }
+
