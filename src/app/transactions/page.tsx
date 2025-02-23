@@ -19,10 +19,14 @@ const fetcher = async (url: string): Promise<{ transactions: Transaction[] }> =>
   return res.json();
 };
 
+const user = { referralCode: "pra7432" };
 const Transactions = () => {
-  const { data, error, isLoading } = useSWR("/api/get-transactions", fetcher, {
+  const { data, error, isLoading } = useSWR(`/api/get-transactions?ref=${user.referralCode}`, fetcher, {
     revalidateOnFocus: false,
   });
+  
+
+
 
   const transactions: Transaction[] = data?.transactions || [];
 

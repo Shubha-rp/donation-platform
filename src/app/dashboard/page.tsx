@@ -113,9 +113,8 @@ export default function Dashboard() {
         <Button className="w-full md:w-auto bg-green-500" onClick={shareOnWhatsApp}>Share on WhatsApp</Button>
       </div>
        {/* Trigger Donation Button */}
-       <div className="mt-4">
-        <Button className="w-full md:w-auto bg-blue-500" onClick={handleTransaction}>
-          Donate ₹100
+      <div className="mt-4">
+        <Button className="w-full md:w-auto bg-black" onClick={handleTransaction}>
         </Button>
       </div>
     </div>
