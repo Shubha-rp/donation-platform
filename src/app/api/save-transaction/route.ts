@@ -34,9 +34,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, message: "Transaction saved", transaction }, { status: 201 });
 
-  } catch (error: any) {
-    console.error("❌ Error saving transaction:", error.message || error);
-    
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+  } catch (error) {
+    console.error("❌ Error saving transaction:", error);
+
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal Server Error" }, 
+      { status: 500 }
+    );
   }
 }

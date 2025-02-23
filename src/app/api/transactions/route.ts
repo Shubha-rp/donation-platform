@@ -1,5 +1,4 @@
 import { connectDB } from "@/lib/mongodb";
-import Transaction from "@/models/transaction";
 import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 

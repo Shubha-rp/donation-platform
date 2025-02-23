@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import dbConnect from "@/lib/dbconnect";
-import Transaction from "@/models/transaction";
+
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,8 +1,41 @@
 "use client";
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
+  }
+}
+
 import { useState, useEffect } from "react";
 
 interface DonationFormProps {
   referralCode?: string;
+}
+
+interface RazorpayResponse {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayInstance {
+  open: () => void;
+}
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayResponse) => void;
+  prefill: {
+    name: string;
+    email: string;
+    contact: string;
+  };
+  theme: { color: string };
 }
 
 const DonationForm: React.FC<DonationFormProps> = ({ referralCode = "" }) => {
@@ -58,71 +91,68 @@ const DonationForm: React.FC<DonationFormProps> = ({ referralCode = "" }) => {
       });
 
       const data = await res.json();
-      console.log("API Response:", data);
+      console.log("📤 Payment API Response:", data);
 
-      if (!res.ok) {
+      if (!res.ok || !data.success || !data.orderId) {
         setError(`❌ Payment failed: ${data.error || "Unknown error"}`);
         setLoading(false);
         return;
       }
 
-      if (data.success && data.orderId) {
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount: data.amount,
-          currency: data.currency,
-          name: "Donation Platform",
-          description: "Support a cause",
-          order_id: data.orderId,
-          handler: async function (response: any) {
-            console.log("Razorpay Response:", response);
+      const options: RazorpayOptions = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        amount: data.amount,
+        currency: data.currency,
+        name: "Donation Platform",
+        description: "Support a cause",
+        order_id: data.orderId,
+        handler: async (response: RazorpayResponse) => {
+          console.log("📥 Razorpay Response:", response);
 
-            try {
-              const Response = await fetch("/api/save-transaction", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  fullName,
-                  email,
-                  amount: donationAmount,
-                  referralCode: userReferralCode,
-                  status: "success", // Ensure status is passed
-                  date: new Date().toISOString(),
-                  transactionId: response.razorpay_payment_id
-                }),
-              });
-              console.log("Sending Data:", { fullName, email, amount: donationAmount, referralCode });
+          try {
+            const saveRes = await fetch("/api/save-transaction", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fullName,
+                email,
+                amount: donationAmount,
+                referralCode: userReferralCode,
+                status: "success",
+                date: new Date().toISOString(),
+                transactionId: response.razorpay_payment_id,
+              }),
+            });
 
-              const saveData = await Response.json();
-              
-              if (!Response.ok) {
-                setError(`⚠️ Error saving transaction: ${saveData.error || "Unknown error"}`);
-              } else {
-                //window.location.href = `/thank-you?amount=${donationAmount}&transactionId=${saveData.transactionId}`;
-                window.location.href = `/thank-you?amount=${donationAmount}&transactionId=${response.razorpay_payment_id}`;
-              }
-              
-            } catch (err) {
-              console.error("Transaction Save Error:", err);
-              setError("⚠️ Error storing transaction. Please contact support.");
+            const saveData = await saveRes.json();
+            console.log("📤 Save Transaction API Response:", saveData);
+
+            if (!saveRes.ok) {
+              setError(`⚠️ Error saving transaction: ${saveData.error || "Unknown error"}`);
+            } else {
+              window.location.href = `/thank-you?amount=${donationAmount}&transactionId=${response.razorpay_payment_id}`;
             }
-          },
+          } catch (err) {
+            console.error("❌ Transaction Save Error:", err);
+            setError("⚠️ Error storing transaction. Please contact support.");
+          }
+        },
+        prefill: {
+          name: fullName,
+          email,
+          contact: phone,
+        },
+        theme: { color: "#3399cc" },
+      };
 
-          prefill: {
-            name: fullName,
-            email: email,
-            contact: phone,
-          },
-          theme: { color: "#3399cc" },
-        };
-
-        const razorpay = new (window as any).Razorpay(options);
+      if (window.Razorpay) {
+        const razorpay = new window.Razorpay(options);
         razorpay.open();
       } else {
-        setError("❌ Payment initiation failed. Please try again.");
+        setError("❌ Razorpay SDK failed to load. Please try again.");
       }
     } catch (err) {
-      console.error("Payment Error:", err);
+      console.error("❌ Payment Error:", err);
       setError("❌ An error occurred. Please try again later.");
     }
 
